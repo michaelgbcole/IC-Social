@@ -20,6 +20,10 @@ model User {
   email     String   @unique
   name      String
   picture   String?
+  bio       String?
+  mainPicture String?
+  interests String?
+  age      Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

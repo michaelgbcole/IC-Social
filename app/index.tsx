@@ -3,7 +3,9 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { useEffect, useState } from "react";
 import { TokenResponse } from "expo-auth-session";
-import { getUserIds, saveUser } from '../services/api';
+import { getUserId, getUserIds, updateUser, authenticateUser } from '../services/api';
+import Card from "./components/tinderCard";
+import OnboardingScreen from "./components/onboardingScreen";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -13,10 +15,11 @@ interface UserProfile {
   picture: string;
 }
 
+
 export default function Index() {
   const [userInfo, setUserInfo] = useState<TokenResponse | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [userIds, setUserIds] = useState<string[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
@@ -26,32 +29,27 @@ export default function Index() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (response?.type === 'success') {
+      if (response?.type === 'success') { 
         setUserInfo(response?.authentication);
         getUserInfo(response.authentication?.accessToken ?? '');
-        try {
-          const ids = await getUserIds();
-          setUserIds(ids);
-          console.log('User IDs fetched successfully:', ids);
-        } catch (error) {
-          console.error('Error fetching user IDs:', error);
-        }
       }
     };
     fetchData();
   }, [response]);
 
-  const saveUserToDatabase = async (user: UserProfile) => {
+  const handleUserAuthentication = async (user: UserProfile) => {
     try {
       const userData = {
         email: user.email,
         name: user.name,
         picture: user.picture
       };
-      const savedUser = await saveUser(userData);
-      console.log('User saved successfully:', savedUser);
+      const authenticatedUser = await authenticateUser(userData);
+      setUserId(authenticatedUser.id);
+      console.log('User authenticated:', authenticatedUser);
+      return authenticatedUser;
     } catch (error) {
-      console.error('Error saving user to database:', error);
+      console.error('Error authenticating user:', error);
     }
   };
 
@@ -65,42 +63,49 @@ export default function Index() {
       );
       const user = await response.json();
       setUserProfile(user);
-      await saveUserToDatabase(user);
+      await handleUserAuthentication(user);
     } catch (error) {
       console.log("Error fetching user profile:", error);
     }
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Pressable
-        onPress={() => promptAsync()}
-        style={{
-          backgroundColor: '#4285F4',
-          padding: 16,
-          borderRadius: 8,
-        }}
-      >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>
-          Sign in with Google
-        </Text>
-      </Pressable>
-
-      {userProfile && (
-        <View style={{ marginTop: 20, alignItems: 'center' }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
-            Welcome, {userProfile.name}!
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      {!userProfile ? (
+        <Pressable
+          onPress={() => promptAsync()}
+          style={{
+            backgroundColor: '#4285F4',
+            padding: 16,
+            borderRadius: 8,
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>
+            Sign in with Google
           </Text>
-          <Text style={{ fontSize: 16, color: 'gray' }}>
-            User IDs: {userIds}
-          </Text>
-        </View>
+        </Pressable>
+      ) : (
+        <OnboardingScreen
+          name={userProfile.name}
+          userId={userId!}
+          onComplete={async (profileData) => {
+            if (!userId) {
+              console.error('No user ID available');
+              return;
+            }
+            console.log('Profile data:', profileData);
+            updateUser(userId, {
+              id: userId,
+              name: userProfile.name,
+              email: userProfile.email,
+              picture: userProfile.picture,
+              bio: profileData.bio,
+              interests: profileData.preference,
+              mainPicture: profileData.image,
+              age: Number(profileData.age)
+            });
+          }}
+        />
       )}
     </View>
   );
