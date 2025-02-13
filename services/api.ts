@@ -15,6 +15,16 @@ type OnboardingData = {
   interests: string;
   mainPicture: string;
   age: number;
+  gender: string;
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  mainPicture: string;
+  age: number;
+  bio: string;
+  gender: string;
 }
 
 export const authenticateUser = async (userData: UserData) => {
@@ -57,7 +67,7 @@ export const authenticateUser = async (userData: UserData) => {
 //     return await response.json();
 //   } catch (error) {
 //     console.error('Error saving user:', error);
-//     throw error;
+//     throw error;f
 //   }
 // };
 
@@ -114,6 +124,156 @@ export const getUserIds = async (): Promise<string[]> => {
     return await response.json(); // Now directly returns string[]
   } catch (error) {
     console.error('Error fetching user IDs:', error);
+    throw error;
+  }
+};
+
+export const getTenUserImages = async (userId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/api/getTenUserImages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user images:', error);
+    throw error;
+  }
+};
+
+export const getPotentialMatches = async (userId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/api/getPotentialMatches`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching potential matches:', error);
+    throw error;
+  }
+};
+
+export const checkProfileComplete = async (userId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/api/checkProfile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error checking profile:', error);
+    throw error;
+  }
+};
+
+export const handleSwipe = async (userId: string, targetUserId: string, liked: boolean) => {
+  try {
+    const response = await fetch(`${API_URL}/api/handleSwipe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, targetUserId, liked }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error handling swipe:', error);
+    throw error;
+  }
+};
+
+export const getMatches = async (userId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/api/getMatches`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching matches:', error);
+    throw error;
+  }
+};
+
+export const getMessages = async (userId: string, matchId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/api/getMessages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, matchId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    throw error;
+  }
+};
+
+export const sendMessage = async (senderId: string, receiverId: string, content: string) => {
+  try {
+    console.log('Sending message:', { senderId, receiverId, content }); // Debug log
+    const response = await fetch(`${API_URL}/api/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ senderId, receiverId, content }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to send message');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error sending message:', error);
     throw error;
   }
 };

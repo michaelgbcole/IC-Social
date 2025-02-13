@@ -12,12 +12,14 @@ interface OnboardingScreenProps {
     bio: string;
     preference: string;
     age: number;
+    gender: string;
   }) => void;
 }
 
 export default function OnboardingScreen({ name, userId, onComplete }: OnboardingScreenProps) {
   const [image, setImage] = useState<string | null>(null);
   const [bio, setBio] = useState('');
+  const [gender, setGender] = useState('')
   const [preference, setPreference] = useState('');
   const [age, setAge] = useState<string>('');
 
@@ -55,6 +57,7 @@ export default function OnboardingScreen({ name, userId, onComplete }: Onboardin
       bio,
       preference,
       age: ageNumber,
+      gender,
     });
   };
 
@@ -96,6 +99,20 @@ export default function OnboardingScreen({ name, userId, onComplete }: Onboardin
         maxLength={140}
         style={styles.bioInput}
         right={<TextInput.Affix text={`${bio.length}/140`} />}
+      />
+
+      <Text variant="bodyLarge" style={styles.preferenceLabel}>
+        I'm a
+      </Text>
+      
+      <SegmentedButtons
+        value={gender}
+        onValueChange={setGender}
+        buttons={[
+          { value: 'female', label: 'Girl' },
+          { value: 'male', label: 'Guy' },
+        ]}
+        style={styles.segmentedButtons}
       />
 
       <Text variant="bodyLarge" style={styles.preferenceLabel}>

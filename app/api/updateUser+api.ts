@@ -13,6 +13,8 @@ export async function POST(request: Request) {
             interests: body.interests,
             bio: body.bio,
             mainPicture: body.mainPicture,
+            age: body.age,
+            gender: body.gender
         },
 
     })
