@@ -5,7 +5,7 @@ export async function POST(request: Request) {
         const { userId } = await request.json();
         console.log('Fetching matches for userId:', userId);
 
-        // Get current user's preferences and acted-upon users
+        // Get current user's preferences and info
         const currentUser = await prisma.user.findUnique({
             where: { id: userId },
             select: {
@@ -16,45 +16,41 @@ export async function POST(request: Request) {
             }
         });
 
-        console.log('Current user data:', currentUser);
-
         if (!currentUser) {
             return Response.json({ error: 'User not found' }, { status: 404 });
         }
 
-        // Get all users for debugging
-        const allUsers = await prisma.user.findMany({
-            select: {
-                id: true,
-                name: true,
-                gender: true,
-                interests: true
-            }
-        });
-        console.log('All users in system:', allUsers);
-
-        // Modified gender filter logic
+        // Modified gender filter logic with mutual interest matching
         let genderFilter: string[] = [];
+        let interestsFilter: string[] = [];
+
         if (currentUser.interests === 'women') {
             genderFilter = ['female'];
+            interestsFilter = ['men', 'both'];
         } else if (currentUser.interests === 'men') {
             genderFilter = ['male'];
+            interestsFilter = ['women', 'both'];
         } else if (currentUser.interests === 'both') {
             genderFilter = ['male', 'female'];
+            interestsFilter = ['men', 'women', 'both'];
         }
-        
-        console.log('Gender filter:', genderFilter);
-        console.log('Previously liked users:', currentUser.likedUserIds);
-        console.log('Previously rejected users:', currentUser.rejectedUserIds);
 
-        // Get potential matches with more detailed logging
+        console.log('Filtering criteria:', {
+            myGender: currentUser.gender,
+            myInterests: currentUser.interests,
+            targetGenders: genderFilter,
+            targetMustBeInterestedIn: interestsFilter
+        });
+
+        // Get potential matches with mutual interest filtering
         const potentialMatches = await prisma.user.findMany({
             where: {
                 AND: [
-                    { id: { not: userId } }, // Not the current user
-                    { gender: { in: genderFilter } }, // Matches gender preference
-                    { mainPicture: { not: null } }, // Has a profile picture
-                    { bio: { not: null } }, // Has a bio
+                    { id: { not: userId } },
+                    { gender: { in: genderFilter } },
+                    { interests: { in: interestsFilter } }, // They must be interested in people of my gender
+                    { mainPicture: { not: null } },
+                    { bio: { not: null } },
                     {
                         id: {
                             notIn: [
