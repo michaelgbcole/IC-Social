@@ -1,4 +1,4 @@
-import { Text, View, Pressable } from "react-native";
+import { Text, View, Pressable, Image, StyleSheet } from "react-native";
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { useEffect, useState } from "react";
@@ -9,6 +9,8 @@ import SwipingScreen from './components/swipingScreen';
 import { SegmentedButtons } from 'react-native-paper';
 import MessagingScreen from './components/messagingScreen';
 import SocketProvider from "./contexts/SocketContext";
+import LoadingScreen from './components/LoadingScreen';
+import { COLORS } from './theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -18,13 +20,13 @@ interface UserProfile {
   picture: string;
 }
 
-
 export default function Index() {
   const [userInfo, setUserInfo] = useState<TokenResponse | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isProfileComplete, setIsProfileComplete] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('swipe');
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
@@ -33,13 +35,21 @@ export default function Index() {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (response?.type === 'success') { 
-        setUserInfo(response?.authentication);
-        getUserInfo(response.authentication?.accessToken ?? '');
+    const initializeApp = async () => {
+      setIsInitializing(true);
+      try {
+        if (response?.type === 'success') {
+          setUserInfo(response.authentication);
+          await getUserInfo(response.authentication?.accessToken ?? '');
+        }
+      } catch (error) {
+        console.error('Error initializing app:', error);
+      } finally {
+        setIsInitializing(false);
       }
     };
-    fetchData();
+
+    initializeApp();
   }, [response]);
 
   const handleUserAuthentication = async (user: UserProfile) => {
@@ -56,7 +66,6 @@ export default function Index() {
       const profileStatus = await checkProfileComplete(authenticatedUser.id);
       setIsProfileComplete(profileStatus.isComplete);
       
-      console.log('User authenticated:', authenticatedUser);
       return authenticatedUser;
     } catch (error) {
       console.error('Error authenticating user:', error);
@@ -80,36 +89,39 @@ export default function Index() {
   };
 
   const renderMainContent = () => {
+    if (isInitializing) {
+      return <LoadingScreen />;
+    }
+
     if (!userProfile) {
       return (
-        <Pressable
-          onPress={() => promptAsync()}
-          style={{
-            backgroundColor: '#4285F4',
-            padding: 16,
-            borderRadius: 8,
-          }}
-        >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>
-            Sign in with Google
-          </Text>
-        </Pressable>
+        <View style={styles.authContainer}>
+          <Image 
+            source={require('../assets/images/IC-logo.png')} 
+            style={styles.authLogo}
+          />
+          <Text style={styles.welcomeText}>Welcome to IC Social</Text>
+          <Pressable
+            onPress={() => promptAsync()}
+            style={styles.googleButton}
+          >
+            <Text style={styles.googleButtonText}>
+              Sign in with Google
+            </Text>
+          </Pressable>
+        </View>
       );
     }
 
-    if (userId && !isProfileComplete) {
+    if (!isProfileComplete) {
       return (
-        <View style={{ flex: 1, width: '100%' }}>
-          <Text style={{ textAlign: 'center', marginBottom: 20 }}>
-            Complete your profile to start matching!
-          </Text>
+        <View style={styles.container}>
           <OnboardingScreen
             name={userProfile.name}
-            userId={userId}
+            userId={userId!}
             onComplete={async (profileData) => {
-              console.log('Profile data:', profileData);
-              await updateUser(userId, {
-                id: userId,
+              await updateUser(userId!, {
+                id: userId!,
                 name: userProfile.name,
                 email: userProfile.email,
                 picture: userProfile.picture,
@@ -132,10 +144,26 @@ export default function Index() {
           value={activeTab}
           onValueChange={setActiveTab}
           buttons={[
-            { value: 'swipe', label: 'Swipe' },
-            { value: 'messages', label: 'Messages' },
+            {
+              value: 'swipe',
+              label: 'Swipe',
+              style: styles.segmentButton,
+              checkedColor: COLORS.primary,
+            },
+            {
+              value: 'messages',
+              label: 'Messages',
+              style: styles.segmentButton,
+              checkedColor: COLORS.primary,
+            },
           ]}
-          style={{ margin: 12 }}
+          style={styles.segmentedButtons}
+          theme={{
+            colors: {
+              secondaryContainer: COLORS.primary + '20', // Add 20% opacity
+              onSecondaryContainer: COLORS.primary,
+            }
+          }}
         />
         {activeTab === 'swipe' ? (
           <SwipingScreen userId={userId!} />
@@ -147,11 +175,54 @@ export default function Index() {
   };
 
   return (
-        <SocketProvider>
-    
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      {renderMainContent()}
-    </View>
+    <SocketProvider>
+      <View style={styles.container}>
+        {renderMainContent()}
+      </View>
     </SocketProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  authContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: COLORS.background,
+  },
+  authLogo: {
+    width: 120,
+    height: 120,
+    marginBottom: 30,
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 30,
+  },
+  googleButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    elevation: 4,
+  },
+  googleButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  segmentedButtons: {
+    margin: 12,
+  },
+  segmentButton: {
+    borderColor: COLORS.primary,
+    borderWidth: 1,
+  },
+});

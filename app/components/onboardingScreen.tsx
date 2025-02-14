@@ -3,6 +3,7 @@ import { View, Image, StyleSheet, Platform } from 'react-native';
 import { Button, TextInput, SegmentedButtons, Text, Surface } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage } from '../../services/storage';
+import { COLORS } from '../theme';
 
 interface OnboardingScreenProps {
   name: string;
@@ -64,14 +65,30 @@ export default function OnboardingScreen({ name, userId, onComplete }: Onboardin
   return (
     <Surface style={styles.container}>
       <Text variant="headlineMedium" style={styles.welcome}>
-        Welcome, {name}!
+        Welcome to IC Social, {name}!
       </Text>
       
       <View style={styles.imageContainer}>
         {image ? (
-          <Image source={{ uri: image }} style={styles.image} />
+          <View style={styles.imageWrapper}>
+            <Image source={{ uri: image }} style={styles.image} />
+            <Button 
+              mode="contained" 
+              onPress={pickImage}
+              style={styles.changePhotoButton}
+              labelStyle={styles.buttonLabel}
+            >
+              Change Photo
+            </Button>
+          </View>
         ) : (
-          <Button mode="contained" onPress={pickImage}>
+          <Button 
+            mode="contained" 
+            onPress={pickImage}
+            style={styles.uploadButton}
+            icon="camera"
+            labelStyle={styles.buttonLabel}
+          >
             Upload Profile Picture
           </Button>
         )}
@@ -82,12 +99,13 @@ export default function OnboardingScreen({ name, userId, onComplete }: Onboardin
         label="Age"
         value={age}
         onChangeText={(text) => {
-          // Only allow numbers
           if (/^\d*$/.test(text)) setAge(text);
         }}
         keyboardType="numeric"
-        style={styles.ageInput}
+        style={[styles.input, styles.ageInput]}
         maxLength={2}
+        outlineColor={COLORS.primary}
+        activeOutlineColor={COLORS.primary}
       />
 
       <TextInput
@@ -97,25 +115,37 @@ export default function OnboardingScreen({ name, userId, onComplete }: Onboardin
         onChangeText={setBio}
         multiline
         maxLength={140}
-        style={styles.bioInput}
+        style={[styles.input, styles.bioInput]}
         right={<TextInput.Affix text={`${bio.length}/140`} />}
+        outlineColor={COLORS.primary}
+        activeOutlineColor={COLORS.primary}
       />
 
-      <Text variant="bodyLarge" style={styles.preferenceLabel}>
-        I'm a
+      <Text variant="titleMedium" style={styles.sectionTitle}>
+        I am a:
       </Text>
       
       <SegmentedButtons
         value={gender}
         onValueChange={setGender}
         buttons={[
-          { value: 'female', label: 'Girl' },
-          { value: 'male', label: 'Guy' },
+          { 
+            value: 'female', 
+            label: 'Woman',
+            style: styles.segmentButton,
+            checkedColor: COLORS.primary,
+          },
+          { 
+            value: 'male', 
+            label: 'Man',
+            style: styles.segmentButton,
+            checkedColor: COLORS.primary,
+          },
         ]}
         style={styles.segmentedButtons}
       />
 
-      <Text variant="bodyLarge" style={styles.preferenceLabel}>
+      <Text variant="titleMedium" style={styles.sectionTitle}>
         I'm interested in:
       </Text>
       
@@ -123,9 +153,24 @@ export default function OnboardingScreen({ name, userId, onComplete }: Onboardin
         value={preference}
         onValueChange={setPreference}
         buttons={[
-          { value: 'women', label: 'Women' },
-          { value: 'men', label: 'Men' },
-          { value: 'both', label: 'Both' },
+          { 
+            value: 'women', 
+            label: 'Women',
+            style: styles.segmentButton,
+            checkedColor: COLORS.primary,
+          },
+          { 
+            value: 'men', 
+            label: 'Men',
+            style: styles.segmentButton,
+            checkedColor: COLORS.primary,
+          },
+          { 
+            value: 'both', 
+            label: 'Both',
+            style: styles.segmentButton,
+            checkedColor: COLORS.primary,
+          },
         ]}
         style={styles.segmentedButtons}
       />
@@ -134,7 +179,8 @@ export default function OnboardingScreen({ name, userId, onComplete }: Onboardin
         mode="contained"
         onPress={handleSubmit}
         style={styles.submitButton}
-        disabled={!image || !bio || !preference || !age}
+        disabled={!image || !bio || !preference || !age || !gender}
+        labelStyle={styles.buttonLabel}
       >
         Complete Profile
       </Button>
@@ -146,34 +192,65 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    width: '100%',
+    backgroundColor: COLORS.background,
   },
   welcome: {
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
+    color: COLORS.primary,
+    fontWeight: 'bold',
   },
   imageContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
+  },
+  imageWrapper: {
+    alignItems: 'center',
   },
   image: {
     width: 200,
     height: 200,
     borderRadius: 100,
+    marginBottom: 10,
   },
-  bioInput: {
+  uploadButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+  },
+  changePhotoButton: {
+    backgroundColor: COLORS.secondary,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  input: {
+    backgroundColor: COLORS.background,
     marginBottom: 20,
   },
-  preferenceLabel: {
+  ageInput: {
+    maxWidth: 100,
+  },
+  bioInput: {
+    minHeight: 100,
+  },
+  sectionTitle: {
     marginBottom: 10,
+    color: COLORS.primary,
+    fontWeight: '500',
   },
   segmentedButtons: {
     marginBottom: 20,
   },
+  segmentButton: {
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.primary,
+    borderWidth: 1,
+  },
   submitButton: {
     marginTop: 20,
-  },
-  ageInput: {
-    marginBottom: 20,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 8,
   },
 });

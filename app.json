@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "IC-Social",
-    "slug": "IC-Social",
+    "slug": "ic-social",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -32,6 +32,12 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "be772b03-0184-412e-852f-ffb3d3792efa"
+      }
+    },
+    "owner": "michaelcole"
   }
 }

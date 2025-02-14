@@ -26,6 +26,7 @@ model User {
   age      Int?
   gender   String?
   likedUserIds String[] @default([])
+  rejectedUserIds String[] @default([]) // Add this field
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
   createdAt DateTime @default(now())
